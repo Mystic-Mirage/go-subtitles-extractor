@@ -59,6 +59,10 @@ type ProbeData struct {
 	Streams []*Stream `json:"streams"`
 }
 
+type VideoFile struct {
+	FileName string
+}
+
 type Subtitles struct {
 	FileName string
 	Index    int
@@ -85,7 +89,7 @@ func (s *Subtitles) Path() string {
 	return strings.TrimSuffix(s.FileName, filepath.Ext(s.FileName)) + suffix
 }
 
-func GetSubtitles(fileName string, forcedTitles []string) []*Subtitles {
+func (f *VideoFile) Subtitles(forcedTitles []string) []*Subtitles {
 	subtitles := []*Subtitles{}
 
 	stdErr := strings.Builder{}
@@ -98,7 +102,7 @@ func GetSubtitles(fileName string, forcedTitles []string) []*Subtitles {
 		"-show_streams",
 		"-select_streams",
 		"s",
-		fileName,
+		f.FileName,
 	)
 	command.Stderr = &stdErr
 
@@ -112,7 +116,7 @@ func GetSubtitles(fileName string, forcedTitles []string) []*Subtitles {
 	json.Unmarshal(output, probeData)
 
 	for _, stream := range probeData.Streams {
-		subtitles = append(subtitles, stream.Subtitles(fileName, forcedTitles))
+		subtitles = append(subtitles, stream.Subtitles(f.FileName, forcedTitles))
 	}
 
 	return subtitles

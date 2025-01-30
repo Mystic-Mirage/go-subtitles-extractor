@@ -8,7 +8,10 @@ import (
 func main() {
 	for _, fileName := range os.Args[1:] {
 		fmt.Println(fileName)
-		for _, subtitles := range GetSubtitles(fileName, []string{}) {
+
+		videoFile := VideoFile{FileName: fileName}
+
+		for _, subtitles := range videoFile.Subtitles([]string{}) {
 			fmt.Println(subtitles.Path())
 		}
 	}
