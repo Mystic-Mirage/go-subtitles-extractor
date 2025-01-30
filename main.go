@@ -140,7 +140,7 @@ func run(options *Options) {
 			cache.Save(files)
 		}
 
-		time.Sleep(time.Duration(options.Sleep) * time.Second)
+		time.Sleep(time.Duration(options.Sleep) * time.Minute)
 	}
 }
 
