@@ -1,10 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Options struct {
@@ -86,19 +88,44 @@ func getOptions() *Options {
 	return options
 }
 
+func run(options *Options) {
+	cache := ReadCache(options)
+
+	for {
+		files := Files{}
+		overwriteCache := false
+
+		for _, lib := range options.Libraries {
+			filepath.WalkDir(lib, func(path string, d fs.DirEntry, err error) error {
+				if err != nil {
+					return err
+				}
+
+				info, err := d.Info()
+				if err == nil && info.Mode().IsRegular() {
+					modTime := info.ModTime()
+					if time.Since(modTime) > 300*time.Second {
+						files[path] = modTime
+						if cache.Files[path] != modTime {
+							overwriteCache = true
+							// save subtitles here
+						}
+					}
+				}
+				return err
+			})
+		}
+
+		if overwriteCache || len(files) != len(cache.Files) {
+			cache.Save(files)
+		}
+
+		time.Sleep(time.Duration(options.Sleep) * time.Second)
+	}
+}
+
 func main() {
 	options := getOptions()
 
-	for _, fileName := range os.Args[1:] {
-		fmt.Println(fileName)
-
-		videoFile := VideoFile{FileName: fileName}
-
-		for _, subtitles := range videoFile.Subtitles(options.ForcedTitles) {
-			fmt.Println(subtitles.Path())
-		}
-	}
-
-	cache := ReadCache(options)
-	cache.Save()
+	run(options)
 }

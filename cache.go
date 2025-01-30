@@ -6,13 +6,16 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"time"
 )
 
 const FILENAME = "filelist.json"
 
+type Files map[string]time.Time
+
 type Cache struct {
-	Options *Options       `json:"options"`
-	Files   map[string]int `json:"files"`
+	Options *Options `json:"options"`
+	Files   Files    `json:"files"`
 }
 
 func (c *Cache) Check(options *Options) bool {
@@ -30,7 +33,8 @@ func (c *Cache) Validate(options *Options) {
 	}
 }
 
-func (c *Cache) Save() {
+func (c *Cache) Save(files Files) {
+	c.Files = files
 	fullName := filepath.Join(c.Options.DataDir, FILENAME)
 	bytes, _ := json.MarshalIndent(c, "", "  ")
 	os.WriteFile(fullName, bytes, os.ModePerm)
@@ -38,7 +42,7 @@ func (c *Cache) Save() {
 
 func ReadCache(options *Options) *Cache {
 	fullName := filepath.Join(options.DataDir, FILENAME)
-	cache := &Cache{Files: map[string]int{}}
+	cache := &Cache{Files: Files{}}
 
 	bytes, err := os.ReadFile(fullName)
 	if err == nil {
@@ -46,6 +50,7 @@ func ReadCache(options *Options) *Cache {
 		cache.Validate(options)
 		log.Println("Cache size:", len(cache.Files))
 	} else {
+		cache.Options = options
 		log.Println("Cache (re)initialized")
 	}
 
