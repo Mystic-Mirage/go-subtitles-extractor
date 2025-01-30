@@ -8,18 +8,19 @@ import (
 )
 
 type Options struct {
-	Libraries       []string
-	Sleep           int
-	Forced          bool
-	SkipSrt         bool
-	StripFormatting bool
-	Langs           []string
-	DataDir         string
-	ForcedTitles    []string
+	Libraries       []string `json:"libraries"`
+	Sleep           int      `json:"sleep"`
+	Forced          bool     `json:"forced"`
+	SkipSrt         bool     `json:"skip_srt"`
+	StripFormatting bool     `json:"strip_formatting"`
+	Langs           []string `json:"langs"`
+	DataDir         string   `json:"data_dir"`
+	ForcedTitles    []string `json:"forced_titles"`
 }
 
 func getOptions() *Options {
 	options := &Options{
+		Libraries:       []string{},
 		Sleep:           1,
 		Forced:          true,
 		SkipSrt:         true,
@@ -97,4 +98,7 @@ func main() {
 			fmt.Println(subtitles.Path())
 		}
 	}
+
+	cache := ReadCache(options)
+	cache.Save()
 }
