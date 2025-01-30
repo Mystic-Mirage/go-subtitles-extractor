@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -36,7 +37,7 @@ func getOptions() *Options {
 	sleep := os.Getenv("SUBTITLES_EXTRACTOR_SLEEP")
 	forced := os.Getenv("SUBTITLES_EXTRACTOR_FORCED_ONLY")
 	skipSrt := os.Getenv("SUBTITLES_EXTRACTOR_SKIP_SRT")
-	stripFormatting := os.Getenv("SUBTITLES_EXTRACTOR_SKIP_SRT")
+	stripFormatting := os.Getenv("SUBTITLES_EXTRACTOR_STRIP_FORMATTING")
 	langs := os.Getenv("SUBTITLES_EXTRACTOR_LANGUAGES")
 	dataDir := os.Getenv("SUBTITLES_EXTRACTOR_DATA_DIR")
 	forcedTitles := os.Getenv("SUBTITLES_EXTRACTOR_FORCED_TITLE")
@@ -88,8 +89,18 @@ func getOptions() *Options {
 	return options
 }
 
+func endsWith(s string, suffixes []string) bool {
+	for _, suffix := range suffixes {
+		if strings.HasSuffix(s, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
 func run(options *Options) {
 	cache := ReadCache(options)
+	extExclude := []string{"." + EXT, ".nfo", ".txt"}
 
 	for {
 		files := Files{}
@@ -101,15 +112,24 @@ func run(options *Options) {
 					return err
 				}
 
+				if endsWith(strings.ToLower(path), extExclude) || strings.Contains(path, "-TdarrCacheFile-") {
+					log.Println("Skipping:", path)
+					return nil
+				}
+
 				info, err := d.Info()
-				if err == nil && info.Mode().IsRegular() {
+				if err != nil {
+					return err
+				}
+
+				if info.Mode().IsRegular() {
 					modTime := info.ModTime()
-					if time.Since(modTime) > 300*time.Second {
-						files[path] = modTime
-						if cache.Files[path] != modTime {
-							overwriteCache = true
-							// save subtitles here
-						}
+					files[path] = modTime
+
+					if time.Since(modTime) > 300*time.Second && cache.Files[path] != modTime {
+						overwriteCache = true
+						log.Println("Processing:", path)
+						SaveSubtitles(path, options)
 					}
 				}
 				return err

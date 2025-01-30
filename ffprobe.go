@@ -5,6 +5,7 @@ import (
 	"log"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -87,6 +88,13 @@ func (s *Subtitles) Path() string {
 	suffix += EXT
 
 	return strings.TrimSuffix(s.FileName, filepath.Ext(s.FileName)) + suffix
+}
+
+func (s *Subtitles) Check(options *Options) bool {
+	return !s.Bitmap &&
+		(!options.Forced || s.Forced) &&
+		(!options.SkipSrt || s.Codec != "subrip") &&
+		(slices.Contains(options.Langs, "*") || slices.Contains(options.Langs, s.Language))
 }
 
 func (f *VideoFile) Subtitles(forcedTitles []string) []*Subtitles {

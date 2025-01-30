@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"os"
 	"path/filepath"
@@ -26,11 +27,13 @@ func (c *Cache) Check(options *Options) bool {
 		reflect.DeepEqual(c.Options.ForcedTitles, options.ForcedTitles)
 }
 
-func (c *Cache) Validate(options *Options) {
+var ErrOptionsMismatch error = errors.New("ErrOptionsMismatch")
+
+func (c *Cache) Validate(options *Options) error {
 	if !c.Check(options) {
-		c.Options = options
-		clear(c.Files)
+		return ErrOptionsMismatch
 	}
+	return nil
 }
 
 func (c *Cache) Save(files Files) {
@@ -47,10 +50,15 @@ func ReadCache(options *Options) *Cache {
 	bytes, err := os.ReadFile(fullName)
 	if err == nil {
 		json.Unmarshal(bytes, cache)
-		cache.Validate(options)
+		err = cache.Validate(options)
+	}
+
+	if err == nil {
 		log.Println("Cache size:", len(cache.Files))
+		return cache
 	} else {
 		cache.Options = options
+		clear(cache.Files)
 		log.Println("Cache (re)initialized")
 	}
 
