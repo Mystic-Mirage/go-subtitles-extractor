@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const EXT = ".srt"
+
 type Options struct {
 	Libraries       []string `json:"libraries"`
 	Sleep           int      `json:"sleep"`
