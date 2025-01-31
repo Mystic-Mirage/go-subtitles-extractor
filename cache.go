@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"reflect"
+	"slices"
 	"time"
 )
 
@@ -23,8 +23,8 @@ func (c *Cache) Check(options *Options) bool {
 	return c.Options.Forced == options.Forced &&
 		c.Options.SkipSrt == options.SkipSrt &&
 		c.Options.StripFormatting == options.StripFormatting &&
-		reflect.DeepEqual(c.Options.Langs, options.Langs) &&
-		reflect.DeepEqual(c.Options.ForcedTitles, options.ForcedTitles)
+		slices.Equal(c.Options.Langs, options.Langs) &&
+		slices.Equal(c.Options.ForcedTitles, options.ForcedTitles)
 }
 
 var ErrOptionsMismatch error = errors.New("ErrOptionsMismatch")
