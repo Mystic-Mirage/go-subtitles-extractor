@@ -40,7 +40,7 @@ func (c *Cache) Save(files Files) {
 	c.Files = files
 	fullName := filepath.Join(c.Options.DataDir, FILENAME)
 	bytes, _ := json.MarshalIndent(c, "", "  ")
-	os.WriteFile(fullName, bytes, os.ModePerm)
+	os.WriteFile(fullName, bytes, 0o644)
 }
 
 func ReadCache(options *Options) *Cache {

@@ -47,7 +47,7 @@ func SaveSubtitles(fileName string, options *Options) {
 			output = []byte(Strip(string(output)))
 		}
 
-		os.WriteFile(dst, output, os.ModePerm)
+		os.WriteFile(dst, output, 0o644)
 		log.Println("Extracted:", dst)
 	}
 }
