@@ -28,12 +28,17 @@ type Stream struct {
 }
 
 func (s *Stream) Subtitles(fileName string, forcedTitles []string) *Subtitles {
+	if s.Tags == nil || s.Disposition == nil {
+		return nil
+	}
+
 	language := s.Tags.Language
 	if language == "" {
 		language = "und"
 	}
 
 	title := strings.ToLower(s.Tags.Title)
+
 	forced := s.Disposition.Forced > 0
 	if !forced {
 		for _, forcedTitle := range forcedTitles {
@@ -43,6 +48,7 @@ func (s *Stream) Subtitles(fileName string, forcedTitles []string) *Subtitles {
 			}
 		}
 	}
+
 	sdh := s.Disposition.HearingImpaired > 0 || strings.Contains(title, "sdh")
 
 	return &Subtitles{
@@ -124,7 +130,9 @@ func (f *VideoFile) Subtitles(forcedTitles []string) []*Subtitles {
 	json.Unmarshal(output, probeData)
 
 	for _, stream := range probeData.Streams {
-		subtitles = append(subtitles, stream.Subtitles(f.FileName, forcedTitles))
+		if ss := stream.Subtitles(f.FileName, forcedTitles); ss != nil {
+			subtitles = append(subtitles, stream.Subtitles(f.FileName, forcedTitles))
+		}
 	}
 
 	return subtitles
