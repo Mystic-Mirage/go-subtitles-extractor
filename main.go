@@ -121,11 +121,12 @@ func run(options *Options) {
 
 				if info.Mode().IsRegular() {
 					modTime := info.ModTime()
-					files[path] = modTime
 
 					cachedModTime, ok := cache.Files[path]
 
-					if !ok || time.Since(modTime) > 5*time.Minute && cachedModTime != modTime {
+					if time.Since(modTime) > 5*time.Minute && (!ok || cachedModTime != modTime) {
+						files[path] = modTime
+
 						overwriteCache = true
 
 						if endsWith(strings.ToLower(path), extExclude) || strings.Contains(path, "-TdarrCacheFile-") {
@@ -135,6 +136,8 @@ func run(options *Options) {
 
 						log.Println("Processing:", path)
 						SaveSubtitles(path, options)
+					} else {
+						files[path] = cachedModTime
 					}
 				}
 				return nil
