@@ -100,7 +100,7 @@ func endsWith(s string, suffixes []string) bool {
 
 func run(options *Options) {
 	cache := ReadCache(options)
-	extExclude := []string{"." + EXT, ".nfo", ".txt"}
+	extExclude := []string{EXT, ".nfo", ".txt"}
 
 	for {
 		files := Files{}
@@ -109,30 +109,33 @@ func run(options *Options) {
 		for _, lib := range options.Libraries {
 			filepath.WalkDir(lib, func(path string, d fs.DirEntry, err error) error {
 				if err != nil {
-					return err
-				}
-
-				if endsWith(strings.ToLower(path), extExclude) || strings.Contains(path, "-TdarrCacheFile-") {
-					log.Println("Skipping:", path)
 					return nil
 				}
 
 				info, err := d.Info()
 				if err != nil {
-					return err
+					return nil
 				}
 
 				if info.Mode().IsRegular() {
 					modTime := info.ModTime()
 					files[path] = modTime
 
-					if time.Since(modTime) > 300*time.Second && cache.Files[path] != modTime {
+					cachedModTime, ok := cache.Files[path]
+
+					if !ok || time.Since(modTime) > 5*time.Minute && cachedModTime != modTime {
 						overwriteCache = true
+
+						if endsWith(strings.ToLower(path), extExclude) || strings.Contains(path, "-TdarrCacheFile-") {
+							log.Println("Skipping:", path)
+							return nil
+						}
+
 						log.Println("Processing:", path)
 						SaveSubtitles(path, options)
 					}
 				}
-				return err
+				return nil
 			})
 		}
 
