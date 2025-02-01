@@ -124,7 +124,7 @@ func run(options *Options) {
 
 					cachedModTime, ok := cache.Files[path]
 
-					if time.Since(modTime) > 5*time.Minute && (!ok || cachedModTime != modTime) {
+					if time.Since(modTime) > 5*time.Minute && (!ok || !modTime.Equal(cachedModTime)) {
 						files[path] = modTime
 
 						overwriteCache = true
