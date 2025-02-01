@@ -122,7 +122,7 @@ func (f *VideoFile) Subtitles(forcedTitles []string) []*Subtitles {
 
 	output, err := command.Output()
 	if err != nil {
-		log.Print("FFPROBE error:", stdErr.String())
+		log.Print("FFPROBE error: ", stdErr.String())
 		return subtitles
 	}
 

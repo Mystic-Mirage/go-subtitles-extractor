@@ -39,7 +39,7 @@ func SaveSubtitles(fileName string, options *Options) {
 
 		output, err := command.Output()
 		if err != nil {
-			log.Print("FFMPEG error:", stdErr.String())
+			log.Print("FFMPEG error: ", stdErr.String())
 			continue
 		}
 
