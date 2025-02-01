@@ -123,22 +123,26 @@ func run(options *Options) {
 					modTime := info.ModTime()
 
 					cachedModTime, ok := cache.Files[path]
-
-					if time.Since(modTime) > 5*time.Minute && (!ok || !modTime.Equal(cachedModTime)) {
-						files[path] = modTime
-
-						overwriteCache = true
-
-						if endsWith(strings.ToLower(path), extExclude) || strings.Contains(path, "-TdarrCacheFile-") {
-							log.Println("Skipping:", path)
+					if !ok || !modTime.Equal(cachedModTime) {
+						if time.Since(modTime) > 5*time.Minute {
+							if endsWith(strings.ToLower(path), extExclude) || strings.Contains(path, "-TdarrCacheFile-") {
+								log.Println("Skipping:", path)
+							} else {
+								log.Println("Processing:", path)
+								SaveSubtitles(path, options)
+							}
+						} else if ok {
+							// keep existing cached time for a while
+							modTime = cachedModTime
+						} else {
+							// don't cache a newly created file
 							return nil
 						}
 
-						log.Println("Processing:", path)
-						SaveSubtitles(path, options)
-					} else {
-						files[path] = cachedModTime
+						overwriteCache = true
 					}
+
+					files[path] = modTime
 				}
 				return nil
 			})
