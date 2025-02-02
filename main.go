@@ -133,7 +133,8 @@ func run(options *Options) {
 							}
 						} else if ok {
 							// keep existing cached time for a while
-							modTime = cachedModTime
+							files[path] = cachedModTime
+							return nil
 						} else {
 							// don't cache a newly created file
 							return nil
