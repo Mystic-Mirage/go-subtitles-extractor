@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	mapset "github.com/deckarep/golang-set/v2"
 )
 
 const EXT = ".srt"
@@ -100,13 +102,19 @@ func endsWith(s string, suffixes []string) bool {
 	return false
 }
 
+type File struct {
+	Path     string
+	UnixNano int64
+}
+
+type FileSet mapset.Set[File]
+
 func run(options *Options) {
 	cache := ReadCache(options)
 	extExclude := []string{EXT, ".nfo", ".txt"}
 
 	for {
-		files := Files{}
-		overwriteCache := false
+		files := mapset.NewSet[File]()
 
 		for _, lib := range options.Libraries {
 			filepath.WalkDir(lib, func(path string, d fs.DirEntry, err error) error {
@@ -119,37 +127,26 @@ func run(options *Options) {
 					return nil
 				}
 
-				if info.Mode().IsRegular() {
-					modTime := info.ModTime()
-
-					cachedModTime, ok := cache.Files[path]
-					if !ok || !modTime.Equal(cachedModTime) {
-						if time.Since(modTime) > 5*time.Minute {
-							if endsWith(strings.ToLower(path), extExclude) || strings.Contains(path, "-TdarrCacheFile-") {
-								log.Println("Skipping:", path)
-							} else {
-								log.Println("Processing:", path)
-								SaveSubtitles(path, options)
-							}
-						} else if ok {
-							// keep existing cached time for a while
-							files[path] = cachedModTime
-							return nil
-						} else {
-							// don't cache a newly created file
-							return nil
-						}
-
-						overwriteCache = true
-					}
-
-					files[path] = modTime
+				modTime := info.ModTime()
+				if info.Mode().IsRegular() && time.Since(modTime) > 5*time.Minute {
+					files.Add(File{Path: path, UnixNano: modTime.UnixNano()})
 				}
 				return nil
 			})
 		}
 
-		if overwriteCache || len(files) != len(cache.Files) {
+		cachedFiles := cache.FileSet()
+
+		for _, file := range files.Difference(cachedFiles).ToSlice() {
+			if endsWith(strings.ToLower(file.Path), extExclude) || strings.Contains(file.Path, "-TdarrCacheFile-") {
+				log.Println("Skipping:", file.Path)
+			} else {
+				log.Println("Processing:", file.Path)
+				SaveSubtitles(file.Path, options)
+			}
+		}
+
+		if !files.Equal(cachedFiles) {
 			cache.Save(files)
 		}
 

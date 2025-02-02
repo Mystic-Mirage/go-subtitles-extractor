@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"slices"
 	"time"
+
+	mapset "github.com/deckarep/golang-set/v2"
 )
 
 const FILENAME = "filelist.json"
@@ -17,6 +19,14 @@ type Files map[string]time.Time
 type Cache struct {
 	Options *Options `json:"options"`
 	Files   Files    `json:"files"`
+}
+
+func (c *Cache) FileSet() FileSet {
+	set := mapset.NewSet[File]()
+	for path, modTime := range c.Files {
+		set.Add(File{Path: path, UnixNano: modTime.UnixNano()})
+	}
+	return set
 }
 
 func (c *Cache) Check(options *Options) bool {
@@ -36,8 +46,11 @@ func (c *Cache) Validate(options *Options) error {
 	return nil
 }
 
-func (c *Cache) Save(files Files) {
-	c.Files = files
+func (c *Cache) Save(files FileSet) {
+	clear(c.Files)
+	for _, file := range files.ToSlice() {
+		c.Files[file.Path] = time.Unix(0, file.UnixNano)
+	}
 	fullName := filepath.Join(c.Options.DataDir, FILENAME)
 	bytes, _ := json.MarshalIndent(c, "", "  ")
 	os.WriteFile(fullName, bytes, 0o644)
