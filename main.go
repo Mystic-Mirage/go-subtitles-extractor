@@ -128,8 +128,12 @@ func run(options *Options) {
 				}
 
 				modTime := info.ModTime()
-				if info.Mode().IsRegular() && time.Since(modTime) > 5*time.Minute {
-					files.Add(File{Path: path, UnixNano: modTime.UnixNano()})
+				if info.Mode().IsRegular() {
+					if time.Since(modTime) > 5*time.Minute {
+						files.Add(File{Path: path, UnixNano: modTime.UnixNano()})
+					} else {
+						files.Add(File{Path: path, UnixNano: cache.Files[path].UnixNano()})
+					}
 				}
 				return nil
 			})
