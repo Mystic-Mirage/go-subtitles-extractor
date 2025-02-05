@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -141,8 +142,12 @@ func run(options *Options) {
 		}
 
 		cachedFiles := cache.FileSet()
+		filesToProcess := files.Difference(cachedFiles).ToSlice()
+		slices.SortFunc(filesToProcess, func(a, b File) int {
+			return strings.Compare(a.Path, b.Path)
+		})
 
-		for _, file := range files.Difference(cachedFiles).ToSlice() {
+		for _, file := range filesToProcess {
 			if endsWith(strings.ToLower(file.Path), extExclude) || strings.Contains(file.Path, "-TdarrCacheFile-") {
 				log.Println("Skipping:", file.Path)
 			} else {
