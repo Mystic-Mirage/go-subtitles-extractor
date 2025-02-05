@@ -10,6 +10,7 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/sirupsen/logrus"
 )
 
 const EXT = ".srt"
@@ -159,6 +160,8 @@ func run(options *Options) {
 }
 
 func main() {
+	logrus.SetLevel(logrus.PanicLevel)
+
 	options := getOptions()
 
 	run(options)
