@@ -16,13 +16,13 @@ import (
 const EXT = ".srt"
 
 type Options struct {
-	Libraries       []string `json:"libraries"`
-	Sleep           int      `json:"sleep"`
+	Libraries       []string `json:"-"`
+	Sleep           int      `json:"-"`
 	Forced          bool     `json:"forced"`
 	SkipSrt         bool     `json:"skip_srt"`
 	StripFormatting bool     `json:"strip_formatting"`
 	Langs           []string `json:"langs"`
-	DataDir         string   `json:"data_dir"`
+	DataDir         string   `json:"-"`
 	ForcedTitles    []string `json:"forced_titles"`
 }
 
